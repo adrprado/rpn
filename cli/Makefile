@@ -13,7 +13,7 @@ LDFLAGS=-ldflags "-w -s -X main.version=${VERSION} -X main.build=${BUILD_TIME}"
 
 .DEFAULT_GOAL: $(BINARY)
 
-$(BINARY): $(SOURCES) $(wildcard ../*.go)
+$(BINARY): $(SOURCES) $(wildcard ../*.go) $(wildcard ../parsers/*.go)
 	go build ${LDFLAGS} -o $(BINARY)
 
 win: $(SOURCES)
