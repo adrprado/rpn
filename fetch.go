@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const dataDir = "data"
+
 // FetchCVM will get data from .zip files downloaded
 // directly from CVM
 func FetchCVM(dataType, year string) (err error) {
@@ -40,9 +42,19 @@ func FetchCVM(dataType, year string) (err error) {
 		return errors.Wrap(err, "could not download file")
 	}
 
-	_, err = Unzip(outfile, "data")
+	files, err := Unzip(outfile, dataDir)
 	if err != nil {
 		return errors.Wrap(err, "could not unzip file")
+	}
+
+	// Clean up
+	files = append(files, outfile)
+	files = append(files, dataDir)
+	for _, f := range files {
+		err = os.Remove(f)
+		if err != nil {
+			fmt.Println("could not delete file", f)
+		}
 	}
 
 	return nil
