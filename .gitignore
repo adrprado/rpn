@@ -4,6 +4,13 @@
 *.dll
 *.so
 *.dylib
+rapina
+
+# Temporary and data files
+*.zip
+**/data
+*.csv
+*.xls*
 
 # Test binary, build with `go test -c`
 *.test
