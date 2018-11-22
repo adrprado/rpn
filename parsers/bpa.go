@@ -35,16 +35,16 @@ VALUES
 //
 // BPA = Balanço Patrimonial Ativo
 //
-func (p *Parsers) BPA(dir string) (err error) {
+func BPA(db *sql.DB, dir string) (err error) {
 	fmt.Println("[ ] Criando/conferindo banco de dados...")
-	err = createBPATable(p.db)
+	err = createBPATable(db)
 	if err != nil {
 		return err
 	}
 	fmt.Println("[x] ok")
 
 	fmt.Println("[ ] Lendo arquivo obtido do servidor da CVM...")
-	err = populateBPATable(p.db, dir)
+	err = populateBPATable(db, dir)
 
 	return nil
 }
