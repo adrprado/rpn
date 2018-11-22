@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/adrprado/rapina/parsers"
@@ -14,15 +13,26 @@ import (
 
 const dataDir = "data"
 
+//
+// FetchYears fetches all statements from a range
+// of years
+//
+func FetchYears(begin, end int) (err error) {
+	p, err := parsers.NewParsers()
+	for year := begin; year <= end; year++ {
+		FetchCVM(&p, "BPA", year)
+	}
+
+	return err
+}
+
 // FetchCVM will get data from .zip files downloaded
 // directly from CVM
-func FetchCVM(dataType, year string) (err error) {
+func FetchCVM(p *parsers.Parsers, dataType string, year int) (err error) {
 	var files []string
-	p, _ := parsers.NewParsers()
 
 	// Check year
-	y, err := strconv.Atoi(year)
-	if err != nil || y < 1900 || y > 2100 {
+	if year < 1900 || year > 2100 {
 		return errors.Wrap(err, "ano inválido")
 	}
 
@@ -32,7 +42,7 @@ func FetchCVM(dataType, year string) (err error) {
 		if files, err = fetchFiles(dataType, year); err != nil {
 			return err
 		}
-		if err = p.BPA(); err != nil {
+		if err = p.BPA(dataDir); err != nil {
 			return err
 		}
 
@@ -42,17 +52,20 @@ func FetchCVM(dataType, year string) (err error) {
 	}
 
 	// Clean up
-	for _, f := range files {
-		err = os.Remove(f)
-		if err != nil {
-			fmt.Println("could not delete file", f)
-		}
-	}
+	// for _, f := range files {
+	// 	err = os.Remove(f)
+	// 	if err != nil {
+	// 		fmt.Println("could not delete file", f)
+	// 	}
+	// }
+	_ = fetchFiles
 
 	return nil
 }
 
+//
 // downloadFile source: https://stackoverflow.com/a/33853856/276311
+//
 func downloadFile(filepath string, url string) (err error) {
 	// Create the file
 	out, err := os.Create(filepath)
@@ -82,13 +95,15 @@ func downloadFile(filepath string, url string) (err error) {
 	return nil
 }
 
+//
 // fetchFiles on CVM server
-func fetchFiles(dataType, year string) (files []string, err error) {
+//
+func fetchFiles(dataType string, year int) (files []string, err error) {
 	dt := strings.ToLower(dataType)
-	url := fmt.Sprintf("http://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/%s/DADOS/%s_cia_aberta_%s.zip", dataType, dt, year)
-	outfile := fmt.Sprintf("%s_%s.zip", dt, year)
+	url := fmt.Sprintf("http://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/%s/DADOS/%s_cia_aberta_%d.zip", dataType, dt, year)
+	outfile := fmt.Sprintf("%s_%d.zip", dt, year)
 
-	fmt.Printf("[x] Baixando %s de %s\n", dataType, year)
+	fmt.Printf("[x] Baixando %s de %d\n", dataType, year)
 	err = downloadFile(outfile, url)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not download file")
