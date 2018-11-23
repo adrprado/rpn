@@ -25,6 +25,33 @@ func getHash(s string) uint32 {
 }
 
 //
+// createTable creates the table if not created yet
+//
+func createTable(db *sql.DB, dataType string) (err error) {
+	statement, err := db.Prepare(createTableMap[dataType])
+	if err != nil {
+		return errors.Wrap(err, "erro ao preparar tabela")
+	}
+
+	_, err = statement.Exec()
+	if err != nil {
+		return errors.Wrap(err, "erro ao criar tabela")
+	}
+
+	// rows, _ := db.Query("SELECT CNPJ_CIA, DT_REFER, DENOM_CIA FROM bpa")
+	// var cnpj string
+	// var dtRef int
+	// var cia string
+	// for rows.Next() {
+	// 	rows.Scan(&cnpj, &dtRef, &cia)
+	// 	fmt.Println(strconv.Itoa(dtRef) + ": " + cnpj + " " + cia)
+	// }
+
+	return nil
+
+}
+
+//
 // populateBPPTable loop thru file and insert its lines into DB
 //
 func populateTable(db *sql.DB, table, file string) (err error) {
@@ -141,15 +168,7 @@ func Exec(db *sql.DB, dataType string, file string) (err error) {
 	dt := strings.ToLower(dataType)
 
 	fmt.Print("[ ] Criando/conferindo banco de dados")
-	switch dataType {
-	case "BPA":
-		err = createBPATable(db)
-	case "BPP":
-		err = createBPPTable(db)
-	default:
-		fmt.Println()
-		return errors.Errorf("tipo de informação não existente (%s)", dataType)
-	}
+	err = createTable(db, dataType)
 	if err != nil {
 		fmt.Println()
 		return err
