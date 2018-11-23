@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const createTableBpa = `CREATE TABLE IF NOT EXISTS bpa
+const createTableBpp = `CREATE TABLE IF NOT EXISTS bpp
 	(
 		"ID" PRIMARY KEY,
 		"CNPJ_CIA" varchar(20),
@@ -27,27 +27,27 @@ const createTableBpa = `CREATE TABLE IF NOT EXISTS bpa
 ;`
 
 //
-// BPA = Balanço Patrimonial Ativo
+// BPP = Balanço Patrimonial Passivo
 //
-func BPA(db *sql.DB, file string) (err error) {
+func BPP(db *sql.DB, file string) (err error) {
 	fmt.Println("[ ] Criando/conferindo banco de dados...")
-	err = createBPATable(db)
+	err = createBPPTable(db)
 	if err != nil {
 		return err
 	}
 	fmt.Println("[x] ok")
 
 	fmt.Println("[ ] Processando arquivo da CVM...")
-	err = populateTable(db, "bpa", file)
+	err = populateTable(db, "bpp", file)
 
 	return err
 }
 
 //
-// createBPATable creates the table if not created yet
+// createBPPTable creates the table if not created yet
 //
-func createBPATable(db *sql.DB) (err error) {
-	statement, err := db.Prepare(createTableBpa)
+func createBPPTable(db *sql.DB) (err error) {
+	statement, err := db.Prepare(createTableBpp)
 	if err != nil {
 		return errors.Wrap(err, "erro ao preparar tabela")
 	}
@@ -57,7 +57,7 @@ func createBPATable(db *sql.DB) (err error) {
 		return errors.Wrap(err, "erro ao criar tabela")
 	}
 
-	// rows, _ := db.Query("SELECT CNPJ_CIA, DT_REFER, DENOM_CIA FROM bpa")
+	// rows, _ := db.Query("SELECT CNPJ_CIA, DT_REFER, DENOM_CIA FROM bpp")
 	// var cnpj string
 	// var dtRef int
 	// var cia string
