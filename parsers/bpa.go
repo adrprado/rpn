@@ -30,15 +30,20 @@ const createTableBpa = `CREATE TABLE IF NOT EXISTS bpa
 // BPA = Balanço Patrimonial Ativo
 //
 func BPA(db *sql.DB, file string) (err error) {
-	fmt.Println("[ ] Criando/conferindo banco de dados...")
+	fmt.Print("[ ] Criando/conferindo banco de dados")
 	err = createBPATable(db)
 	if err != nil {
+		fmt.Println()
 		return err
 	}
-	fmt.Println("[x] ok")
+	fmt.Println("\r[x")
 
-	fmt.Println("[ ] Processando arquivo da CVM...")
+	fmt.Print("[ ] Processando arquivo da CVM")
 	err = populateTable(db, "bpa", file)
+	if err == nil {
+		fmt.Print("\r[x")
+	}
+	fmt.Println()
 
 	return err
 }

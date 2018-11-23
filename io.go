@@ -29,6 +29,9 @@ func FetchYears(begin, end int) (err error) {
 		if err = FetchCVM(db, "BPA", year); err != nil {
 			fmt.Printf("[ ] Erro ao processar BPA de %d: %v\n", year, err)
 		}
+		if err = FetchCVM(db, "BPP", year); err != nil {
+			fmt.Printf("[ ] Erro ao processar BPP de %d: %v\n", year, err)
+		}
 	}
 
 	return err
@@ -51,6 +54,13 @@ func FetchCVM(db *sql.DB, dataType string, year int) (err error) {
 			return err
 		}
 		if err = parsers.BPA(db, file); err != nil {
+			return err
+		}
+	case "BPP":
+		if file, err = fetchFile(dataType, year); err != nil {
+			return err
+		}
+		if err = parsers.BPP(db, file); err != nil {
 			return err
 		}
 

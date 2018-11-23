@@ -71,7 +71,6 @@ func populateTable(db *sql.DB, table, file string) (err error) {
 			fmt.Print(".")
 		}
 	}
-	fmt.Print("\n")
 
 	// END TRANSACTION
 	err = tx.Commit()
