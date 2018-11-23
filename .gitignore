@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+debug
 rapina
 
 # Temporary and data files
