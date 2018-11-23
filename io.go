@@ -49,18 +49,11 @@ func FetchCVM(db *sql.DB, dataType string, year int) (err error) {
 
 	// Check data type
 	switch dataType {
-	case "BPA":
+	case "BPA", "BPP":
 		if file, err = fetchFile(dataType, year); err != nil {
 			return err
 		}
-		if err = parsers.BPA(db, file); err != nil {
-			return err
-		}
-	case "BPP":
-		if file, err = fetchFile(dataType, year); err != nil {
-			return err
-		}
-		if err = parsers.BPP(db, file); err != nil {
+		if err = parsers.Exec(db, dataType, file); err != nil {
 			return err
 		}
 

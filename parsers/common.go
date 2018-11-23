@@ -132,3 +132,36 @@ func insertLine(db *sql.Tx, table string, header *map[string]int, fields []strin
 
 	return nil
 }
+
+//
+// Exec start the data import process, including the database creation
+// if necessary
+//
+func Exec(db *sql.DB, dataType string, file string) (err error) {
+	dt := strings.ToLower(dataType)
+
+	fmt.Print("[ ] Criando/conferindo banco de dados")
+	switch dataType {
+	case "BPA":
+		err = createBPATable(db)
+	case "BPP":
+		err = createBPPTable(db)
+	default:
+		fmt.Println()
+		return errors.Errorf("tipo de informação não existente (%s)", dataType)
+	}
+	if err != nil {
+		fmt.Println()
+		return err
+	}
+	fmt.Println("\r[x")
+
+	fmt.Print("[ ] Processando arquivo")
+	err = populateTable(db, dt, file)
+	if err == nil {
+		fmt.Print("\r[x")
+	}
+	fmt.Println()
+
+	return err
+}

@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -25,28 +24,6 @@ const createTableBpp = `CREATE TABLE IF NOT EXISTS bpp
 		"VL_CONTA" real
 	)
 ;`
-
-//
-// BPP = Balanço Patrimonial Passivo
-//
-func BPP(db *sql.DB, file string) (err error) {
-	fmt.Print("[ ] Criando/conferindo banco de dados")
-	err = createBPPTable(db)
-	if err != nil {
-		fmt.Println()
-		return err
-	}
-	fmt.Println("\r[x")
-
-	fmt.Print("[ ] Processando arquivo da CVM")
-	err = populateTable(db, "bpp", file)
-	if err == nil {
-		fmt.Print("\r[x")
-	}
-	fmt.Println()
-
-	return err
-}
 
 //
 // createBPPTable creates the table if not created yet

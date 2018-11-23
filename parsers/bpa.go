@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -25,28 +24,6 @@ const createTableBpa = `CREATE TABLE IF NOT EXISTS bpa
 		"VL_CONTA" real
 	)
 ;`
-
-//
-// BPA = Balanço Patrimonial Ativo
-//
-func BPA(db *sql.DB, file string) (err error) {
-	fmt.Print("[ ] Criando/conferindo banco de dados")
-	err = createBPATable(db)
-	if err != nil {
-		fmt.Println()
-		return err
-	}
-	fmt.Println("\r[x")
-
-	fmt.Print("[ ] Processando arquivo da CVM")
-	err = populateTable(db, "bpa", file)
-	if err == nil {
-		fmt.Print("\r[x")
-	}
-	fmt.Println()
-
-	return err
-}
 
 //
 // createBPATable creates the table if not created yet
