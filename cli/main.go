@@ -18,7 +18,7 @@ func main() {
 	fmt.Fprintf(os.Stderr, "v%s-%s\n", version, build)
 	fmt.Fprint(os.Stderr, "(2018) github.com/adrprado/rapina\n\n")
 
-	err := rapina.FetchYears(2014, 2017)
+	err := rapina.FetchCVM(2014, 2017)
 	if err != nil {
 		fmt.Println("[x]", err)
 		os.Exit(1)

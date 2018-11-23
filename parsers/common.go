@@ -128,7 +128,7 @@ func insertLine(db *sql.Tx, table string, header *map[string]int, fields []strin
 		// To convert back from sqlite: strftime('%Y-%m-%d', DT_REFER, 'unixepoch')
 		f := ""
 		switch h {
-		case "DT_REFER", "DT_FIM_EXERC":
+		case "DT_REFER", "DT_INI_EXERC", "DT_FIM_EXERC":
 			layout := "2006-01-02"
 			t, err := time.Parse(layout, fields[i])
 			if err != nil {

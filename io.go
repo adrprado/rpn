@@ -16,30 +16,29 @@ import (
 const dataDir = ".data"
 
 //
-// FetchYears fetches all statements from a range
+// FetchCVM fetches all statements from a range
 // of years
 //
-func FetchYears(begin, end int) (err error) {
+func FetchCVM(begin, end int) (err error) {
 	db, err := openDatabase()
 	if err != nil {
 		return err
 	}
 
 	for year := begin; year <= end; year++ {
-		if err = FetchCVM(db, "BPA", year); err != nil {
-			fmt.Printf("[x] Erro ao processar BPA de %d: %v\n", year, err)
-		}
-		if err = FetchCVM(db, "BPP", year); err != nil {
-			fmt.Printf("[x] Erro ao processar BPP de %d: %v\n", year, err)
+		for _, report := range []string{"BPA", "BPP", "DRE", "DFC_MD", "DFC_MI"} {
+			if err = processReport(db, report, year); err != nil {
+				fmt.Printf("[x] Erro ao processar %s de %d: %v\n", report, year, err)
+			}
 		}
 	}
 
 	return err
 }
 
-// FetchCVM will get data from .zip files downloaded
-// directly from CVM
-func FetchCVM(db *sql.DB, dataType string, year int) (err error) {
+// processReport will get data from .zip files downloaded
+// directly from CVM and insert its data into the DB
+func processReport(db *sql.DB, dataType string, year int) (err error) {
 	var file string
 
 	// Check year
@@ -49,7 +48,7 @@ func FetchCVM(db *sql.DB, dataType string, year int) (err error) {
 
 	// Check data type
 	switch dataType {
-	case "BPA", "BPP":
+	case "BPA", "BPP", "DRE", "DFC_MD", "DFC_MI":
 		if file, err = fetchFile(dataType, year); err != nil {
 			return err
 		}
