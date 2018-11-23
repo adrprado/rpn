@@ -20,7 +20,7 @@ func main() {
 
 	err := rapina.FetchYears(2014, 2017)
 	if err != nil {
-		fmt.Println("[ ]", err)
+		fmt.Println("[x]", err)
 		os.Exit(1)
 	}
 

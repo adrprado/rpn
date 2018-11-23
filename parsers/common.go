@@ -55,6 +55,9 @@ func createTable(db *sql.DB, dataType string) (err error) {
 // populateBPPTable loop thru file and insert its lines into DB
 //
 func populateTable(db *sql.DB, table, file string) (err error) {
+	progress := []string{"/", "-", "\\", "|", "-", "\\"}
+	p := 0
+
 	fh, err := os.Open(file)
 	if err != nil {
 		return errors.Wrapf(err, "erro ao abrir arquivo %s", file)
@@ -89,13 +92,14 @@ func populateTable(db *sql.DB, table, file string) (err error) {
 			}
 		} else {
 			if err = insertLine(tx, table, &header, f, getHash(line)); err != nil {
-				fmt.Println("[ ] BPP:", err)
+				fmt.Printf("[x] %s: %v", table, err)
 			}
 		}
 
 		// fmt.Println("-------------------------------")
 		if count++; count%1000 == 0 {
-			fmt.Print(".")
+			fmt.Printf("\r[%s", progress[p%6])
+			p++
 		}
 	}
 
@@ -167,18 +171,15 @@ func insertLine(db *sql.Tx, table string, header *map[string]int, fields []strin
 func Exec(db *sql.DB, dataType string, file string) (err error) {
 	dt := strings.ToLower(dataType)
 
-	fmt.Print("[ ] Criando/conferindo banco de dados")
 	err = createTable(db, dataType)
 	if err != nil {
-		fmt.Println()
 		return err
 	}
-	fmt.Println("\r[x")
 
-	fmt.Print("[ ] Processando arquivo")
+	fmt.Print("[ ] Processando arquivo ", dataType)
 	err = populateTable(db, dt, file)
 	if err == nil {
-		fmt.Print("\r[x")
+		fmt.Print("\r[✓")
 	}
 	fmt.Println()
 

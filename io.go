@@ -27,10 +27,10 @@ func FetchYears(begin, end int) (err error) {
 
 	for year := begin; year <= end; year++ {
 		if err = FetchCVM(db, "BPA", year); err != nil {
-			fmt.Printf("[ ] Erro ao processar BPA de %d: %v\n", year, err)
+			fmt.Printf("[x] Erro ao processar BPA de %d: %v\n", year, err)
 		}
 		if err = FetchCVM(db, "BPP", year); err != nil {
-			fmt.Printf("[ ] Erro ao processar BPP de %d: %v\n", year, err)
+			fmt.Printf("[x] Erro ao processar BPP de %d: %v\n", year, err)
 		}
 	}
 
@@ -105,7 +105,7 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 	url := fmt.Sprintf("http://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/%s/DADOS/%s_cia_aberta_%d.zip", dataType, dt, year)
 	outfile := fmt.Sprintf("%s_%d.zip", dt, year)
 
-	fmt.Printf("[x] Baixando %s de %d\n", dataType, year)
+	fmt.Printf("[✓] Baixando %s de %d\n", dataType, year)
 	err = downloadFile(outfile, url)
 	if err != nil {
 		return "", errors.Wrap(err, "could not download file")
