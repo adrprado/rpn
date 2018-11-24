@@ -103,13 +103,21 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 	dt := strings.ToLower(dataType)
 	url := fmt.Sprintf("http://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/%s/DADOS/%s_cia_aberta_%d.zip", dataType, dt, year)
 	outfile := fmt.Sprintf("%s_%d.zip", dt, year)
+	reqFile = fmt.Sprintf("%s/%s_cia_aberta_con_%d.csv", dataDir, dt, year)
 
+	// Check if files already exists
+	if _, err := os.Stat(reqFile); !os.IsNotExist(err) {
+		return reqFile, nil
+	}
+
+	// Download file from CVM server
 	fmt.Printf("[✓] Baixando %s de %d\n", dataType, year)
 	err = downloadFile(outfile, url)
 	if err != nil {
 		return "", errors.Wrap(err, "could not download file")
 	}
 
+	// Unzip and list files
 	var files []string
 	files, err = Unzip(outfile, dataDir)
 	if err != nil {
@@ -119,7 +127,6 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 
 	// File pattern:
 	// xxx_cia_aberta_con_yyy.csv
-	reqFile = fmt.Sprintf("%s/%s_cia_aberta_con_%d.csv", dataDir, dt, year)
 	idx := find(files, reqFile)
 	if idx == -1 {
 		filesCleanup(files)
