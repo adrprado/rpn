@@ -20,12 +20,23 @@ const dataDir = ".data"
 // of years
 //
 func FetchCVM(begin, end int) (err error) {
+	// Check year
+	if begin < 1900 || begin > 2100 || end < 1900 || end > 2100 {
+		return errors.Wrap(err, "ano inválido")
+	}
+	if begin > end {
+		aux := end
+		end = begin
+		begin = aux
+	}
+
 	db, err := openDatabase()
 	if err != nil {
 		return err
 	}
 
 	for year := begin; year <= end; year++ {
+		fmt.Printf("[✓] %d ---------------------\n", year)
 		for _, report := range []string{"BPA", "BPP", "DRE", "DFC_MD", "DFC_MI"} {
 			if err = processReport(db, report, year); err != nil {
 				fmt.Printf("[x] Erro ao processar %s de %d: %v\n", report, year, err)
@@ -41,24 +52,11 @@ func FetchCVM(begin, end int) (err error) {
 func processReport(db *sql.DB, dataType string, year int) (err error) {
 	var file string
 
-	// Check year
-	if year < 1900 || year > 2100 {
-		return errors.Wrap(err, "ano inválido")
+	if file, err = fetchFile(dataType, year); err != nil {
+		return err
 	}
-
-	// Check data type
-	switch dataType {
-	case "BPA", "BPP", "DRE", "DFC_MD", "DFC_MI":
-		if file, err = fetchFile(dataType, year); err != nil {
-			return err
-		}
-		if err = parsers.Exec(db, dataType, file); err != nil {
-			return err
-		}
-
-	default:
-		return errors.Errorf("tipo de informação não existente (%s)", dataType)
-
+	if err = parsers.Exec(db, dataType, file); err != nil {
+		return err
 	}
 
 	return nil
