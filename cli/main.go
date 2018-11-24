@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adrprado/rapina/reports"
+	"github.com/adrprado/rapina"
 )
 
 var (
@@ -18,7 +18,7 @@ func main() {
 	fmt.Fprintf(os.Stderr, "v%s-%s\n", version, build)
 	fmt.Fprint(os.Stderr, "(2018) github.com/adrprado/rapina\n\n")
 
-	reports.DRE()
+	rapina.Exec()
 	// err := rapina.FetchCVM(2014, 2017)
 	// if err != nil {
 	// 	fmt.Println("[x]", err)

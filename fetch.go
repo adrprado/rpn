@@ -146,18 +146,6 @@ func filesCleanup(files []string) {
 }
 
 //
-// openDatabase to be used by parsers and reporting
-//
-func openDatabase() (db *sql.DB, err error) {
-	db, err = sql.Open("sqlite3", "./cvm.db")
-	if err != nil {
-		return db, errors.Wrap(err, "database open failed")
-	}
-
-	return
-}
-
-//
 // find returns the smallest index i at which x == a[i],
 // or -1 if there is no such index.
 //
