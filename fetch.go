@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/adrprado/rapina/parsers"
@@ -29,6 +30,8 @@ func FetchCVM(begin, end int) (err error) {
 		end = begin
 		begin = aux
 	}
+
+	fetchB3()
 
 	db, err := openDatabase()
 	if err != nil {
@@ -66,6 +69,10 @@ func processReport(db *sql.DB, dataType string, year int) (err error) {
 // downloadFile source: https://stackoverflow.com/a/33853856/276311
 //
 func downloadFile(filepath string, url string) (err error) {
+	// Create dir if necessary
+	basepath := path.Dir(filepath)
+	os.MkdirAll(basepath, os.ModePerm)
+
 	// Create the file
 	out, err := os.Create(filepath)
 	if err != nil {
@@ -100,7 +107,7 @@ func downloadFile(filepath string, url string) (err error) {
 func fetchFile(dataType string, year int) (reqFile string, err error) {
 	dt := strings.ToLower(dataType)
 	url := fmt.Sprintf("http://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/%s/DADOS/%s_cia_aberta_%d.zip", dataType, dt, year)
-	outfile := fmt.Sprintf("%s_%d.zip", dt, year)
+	zipfile := fmt.Sprintf("%s/%s_%d.zip", dataDir, dt, year)
 	reqFile = fmt.Sprintf("%s/%s_cia_aberta_con_%d.csv", dataDir, dt, year)
 
 	// Check if files already exists
@@ -109,19 +116,21 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 	}
 
 	// Download file from CVM server
-	fmt.Printf("[✓] Baixando %s de %d\n", dataType, year)
-	err = downloadFile(outfile, url)
+	fmt.Printf("[ ] Baixando %s %d\r", dataType, year)
+	err = downloadFile(zipfile, url)
 	if err != nil {
+		fmt.Println("[x")
 		return "", errors.Wrap(err, "could not download file")
 	}
+	fmt.Println("[✓")
 
 	// Unzip and list files
 	var files []string
-	files, err = Unzip(outfile, dataDir)
+	files, err = Unzip(zipfile, dataDir)
 	if err != nil {
 		return "", errors.Wrap(err, "could not unzip file")
 	}
-	files = append(files, outfile)
+	files = append(files, zipfile)
 
 	// File pattern:
 	// xxx_cia_aberta_con_yyy.csv
@@ -133,6 +142,45 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 
 	files[idx] = files[len(files)-1] // Replace it with the last one.
 	files = files[:len(files)-1]     // Chop off the last one.
+	filesCleanup(files)
+
+	return
+}
+
+//
+// fetchB3 downloads the sectoral classification file from B3
+//
+func fetchB3() (filename string, err error) {
+	xlsxfile := dataDir + "/sectoral.xlsx"
+	fmt.Print("[ ] Baixando arquivo de classificação setorial da B3\r")
+	zipfile := dataDir + "/sectorial.zip"
+
+	// TODO: check file url as it can be updated
+	err = downloadFile(zipfile, "http://www.b3.com.br/lumis/portal/file/fileDownload.jsp?fileId=8AA8D0975A2D7918015A3C81693D4CA4")
+	if err != nil {
+		fmt.Println("[x")
+		return
+	}
+	fmt.Println("[✓")
+
+	// Unzip and list files
+	var files []string
+	files, err = Unzip(zipfile, dataDir)
+	if err != nil {
+		return "", errors.Wrap(err, "could not unzip file")
+	}
+	if len(files) <= 0 {
+		return "", errors.Wrap(err, "zip file is empty")
+	}
+	files = append(files, zipfile)
+
+	// Considering  there is only one file
+	filename = files[0]
+	os.Remove(xlsxfile)
+	os.Rename(filename, xlsxfile)
+
+	files[0] = files[len(files)-1] // Replace it with the last one.
+	files = files[:len(files)-1]   // Chop off the last one.
 	filesCleanup(files)
 
 	return
