@@ -6,13 +6,13 @@ import (
 )
 
 //
-// Exec process all reports from DB to Excel
+// Report a company from DB to Excel
 //
-func Exec() (err error) {
+func Report(company string) (err error) {
 	db, err := openDatabase()
 	if err != nil {
 		return errors.Wrap(err, "fail to open db")
 	}
 
-	return reports.Exec(db)
+	return reports.Report(db, company, dataDir+"/"+company+".xlsx")
 }

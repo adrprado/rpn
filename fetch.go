@@ -128,6 +128,7 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 	var files []string
 	files, err = Unzip(zipfile, dataDir)
 	if err != nil {
+		os.Remove(zipfile)
 		return "", errors.Wrap(err, "could not unzip file")
 	}
 	files = append(files, zipfile)
@@ -150,11 +151,17 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 //
 // fetchB3 downloads the sectoral classification file from B3
 //
-func fetchB3() (filename string, err error) {
-	xlsxfile := dataDir + "/sectoral.xlsx"
+func fetchB3() (xlsxfile string, err error) {
+	xlsxfile = dataDir + "/sectoral.xlsx"
 	fmt.Print("[ ] Baixando arquivo de classificação setorial da B3\r")
 	zipfile := dataDir + "/sectorial.zip"
 
+	// Check if files already exists
+	if _, err := os.Stat(zipfile); !os.IsNotExist(err) {
+		return xlsxfile, nil
+	}
+
+	// Download file from B3 server
 	// TODO: check file url as it can be updated
 	err = downloadFile(zipfile, "http://www.b3.com.br/lumis/portal/file/fileDownload.jsp?fileId=8AA8D0975A2D7918015A3C81693D4CA4")
 	if err != nil {
@@ -175,9 +182,8 @@ func fetchB3() (filename string, err error) {
 	files = append(files, zipfile)
 
 	// Considering  there is only one file
-	filename = files[0]
 	os.Remove(xlsxfile)
-	os.Rename(filename, xlsxfile)
+	os.Rename(files[0], xlsxfile)
 
 	files[0] = files[len(files)-1] // Replace it with the last one.
 	files = files[:len(files)-1]   // Chop off the last one.
