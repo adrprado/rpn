@@ -18,11 +18,13 @@ func main() {
 	fmt.Fprintf(os.Stderr, "v%s-%s\n", version, build)
 	fmt.Fprint(os.Stderr, "(2018) github.com/adrprado/rapina ツ\n\n")
 
+	fmt.Println("[✓] Coletando dados ===========")
 	err := rapina.FetchCVM(2013, 2017)
 	if err != nil {
 		fmt.Println("[x]", err)
 		os.Exit(1)
 	}
 
+	fmt.Println("\n[✓] Criando relatorio  ========")
 	rapina.Report("WEG", 2013, 2017)
 }

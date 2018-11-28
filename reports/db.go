@@ -127,7 +127,6 @@ func financialReport(db *sql.DB, company string, year int) (statements map[uint3
 
 	statements = make(map[uint32]float32)
 	st := statement{}
-	yearMark := ""
 
 	rows, err := db.Query(selectReport)
 	for rows.Next() {
@@ -140,21 +139,8 @@ func financialReport(db *sql.DB, company string, year int) (statements map[uint3
 			&st.vlConta,
 		)
 
-		if st.date != yearMark {
-			yearMark = st.date
-			fmt.Println("-----------------")
-		}
-		// fmt.Println(st)
 		statements[parsers.GetHash(st.cdConta+st.dsConta)] = st.vlConta
 	}
-
-	// genericPrint(rows)
-
-	// s1, _ := e.newSheet("Um")
-	// cols, _ := rows.Columns()
-	// s1.printHeader(cols)
-	// s2, _ := e.newSheet("Dois")
-	// s2.printHeader([]string{"a2", "b2", "c2"})
 
 	return
 }
