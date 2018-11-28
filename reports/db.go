@@ -3,16 +3,24 @@ package reports
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/adrprado/rapina/parsers"
 )
+
+type stItems struct {
+	hash    uint32
+	cdConta string
+	dsConta string
+}
 
 //
 // statementItems returns all statements codes and descriptions, e.g.:
 // [1 Ativo Total, 1.01 Ativo Circulante, ...]
 //
-func statementItems(db *sql.DB, company string) (items []string, err error) {
+func statementItems(db *sql.DB, company string) (items []stItems, err error) {
 	selectItems := fmt.Sprintf(`
 	SELECT DISTINCT
-		printf("%%s %%s", CD_CONTA, DS_CONTA) AS ITEM
+		CD_CONTA, DS_CONTA
 	FROM
 		bpa
 	WHERE
@@ -20,7 +28,7 @@ func statementItems(db *sql.DB, company string) (items []string, err error) {
 		AND ORDEM_EXERC LIKE "_LTIMO"
 
 	UNION SELECT DISTINCT
-		printf("%%s %%s", CD_CONTA, DS_CONTA) AS ITEM
+		CD_CONTA, DS_CONTA
 	FROM
 		bpp
 	WHERE
@@ -28,7 +36,7 @@ func statementItems(db *sql.DB, company string) (items []string, err error) {
 		AND ORDEM_EXERC LIKE "_LTIMO"
 
 	UNION SELECT DISTINCT
-		printf("%%s %%s", CD_CONTA, DS_CONTA) AS ITEM
+		CD_CONTA, DS_CONTA
 	FROM
 		dre
 	WHERE
@@ -36,7 +44,7 @@ func statementItems(db *sql.DB, company string) (items []string, err error) {
 		AND ORDEM_EXERC LIKE "_LTIMO"
 
 	ORDER BY
-		ITEM
+		CD_CONTA, DS_CONTA
 	;`, company, company, company)
 
 	rows, err := db.Query(selectItems)
@@ -44,9 +52,10 @@ func statementItems(db *sql.DB, company string) (items []string, err error) {
 		panic(err)
 	}
 
-	var item string
+	var item stItems
 	for rows.Next() {
-		rows.Scan(&item)
+		rows.Scan(&item.cdConta, &item.dsConta)
+		item.hash = parsers.GetHash(item.cdConta + item.dsConta)
 		items = append(items, item)
 	}
 
@@ -67,7 +76,7 @@ type statement struct {
 //
 // financialReport
 //
-func financialReport(db *sql.DB, e *Excel, company, year string) (statements []statement, err error) {
+func financialReport(db *sql.DB, company string, year int) (statements map[uint32]float32, err error) {
 
 	selectReport := fmt.Sprintf(`
 	SELECT
@@ -82,7 +91,7 @@ func financialReport(db *sql.DB, e *Excel, company, year string) (statements []s
 	WHERE
 		DENOM_CIA LIKE "%s%%"
 		AND ORDEM_EXERC LIKE "_LTIMO"
-		AND DT = "%s-12-31"
+		AND DT = "%d-12-31"
 
 	UNION SELECT
 		strftime('%%Y-%%m-%%d', DT_FIM_EXERC, 'unixepoch') AS DT,
@@ -96,7 +105,7 @@ func financialReport(db *sql.DB, e *Excel, company, year string) (statements []s
 	WHERE
 		DENOM_CIA LIKE "%s%%"
 		AND ORDEM_EXERC LIKE "_LTIMO"
-		AND DT = "%s-12-31"
+		AND DT = "%d-12-31"
 
 	UNION SELECT
 		strftime('%%Y-%%m-%%d', DT_FIM_EXERC, 'unixepoch') AS DT,
@@ -110,13 +119,13 @@ func financialReport(db *sql.DB, e *Excel, company, year string) (statements []s
 	WHERE
 		DENOM_CIA LIKE "%s%%"
 		AND ORDEM_EXERC LIKE "_LTIMO"
-		AND DT = "%s-12-31"
+		AND DT = "%d-12-31"
 
 	ORDER BY
 		DT, CD_CONTA
 	;`, company, year, company, year, company, year)
 
-	statements = make([]statement, 0, 200)
+	statements = make(map[uint32]float32)
 	st := statement{}
 	yearMark := ""
 
@@ -136,7 +145,7 @@ func financialReport(db *sql.DB, e *Excel, company, year string) (statements []s
 			fmt.Println("-----------------")
 		}
 		// fmt.Println(st)
-		statements = append(statements, st)
+		statements[parsers.GetHash(st.cdConta+st.dsConta)] = st.vlConta
 	}
 
 	// genericPrint(rows)

@@ -17,9 +17,9 @@ import (
 var fnvHash = fnv.New32a()
 
 //
-// getHash returns the FNV-1 non-cryptographic hash
+// GetHash returns the FNV-1 non-cryptographic hash
 //
-func getHash(s string) uint32 {
+func GetHash(s string) uint32 {
 	fnvHash.Write([]byte(s))
 	defer fnvHash.Reset()
 
@@ -94,7 +94,7 @@ func populateTable(db *sql.DB, table, file string) (err error) {
 				header[h] = i
 			}
 		} else {
-			if err = insertLine(tx, table, &header, f, getHash(line)); err != nil {
+			if err = insertLine(tx, table, &header, f, GetHash(line)); err != nil {
 				fmt.Printf("[x] %s: %v", table, err)
 			}
 		}
