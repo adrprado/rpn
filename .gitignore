@@ -13,6 +13,7 @@ rapina
 *.csv
 *.xls*
 *.db
+*.old
 
 # Test binary, build with `go test -c`
 *.test

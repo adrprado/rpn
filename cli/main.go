@@ -1,30 +1,21 @@
+// Copyright © 2018 Adriano Prado
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/adrprado/rapina"
-)
-
-var (
-	version string
-	build   string
-)
+import "github.com/adrprado/rapina/cli/cmd"
 
 func main() {
-
-	fmt.Fprint(os.Stderr, "Rapina - Dados Financeiros de Empresas via CVM - ")
-	fmt.Fprintf(os.Stderr, "v%s-%s\n", version, build)
-	fmt.Fprint(os.Stderr, "(2018) github.com/adrprado/rapina ツ\n\n")
-
-	fmt.Println("[✓] Coletando dados ===========")
-	err := rapina.FetchCVM(2013, 2017)
-	if err != nil {
-		fmt.Println("[x]", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("\n[✓] Criando relatorio  ========")
-	rapina.Report("WEG", 2013, 2017)
+	cmd.Execute()
 }
