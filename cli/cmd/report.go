@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/adrprado/rapina"
 	"github.com/spf13/cobra"
@@ -34,9 +33,8 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("report called", strings.Join(args, " "))
 		fmt.Println("\n[✓] Criando relatorio  ========")
-		rapina.Report("WEG", 2013, 2017)
+		rapina.Report(args[0], 2013, 2017)
 	},
 }
 

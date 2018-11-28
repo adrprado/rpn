@@ -1,6 +1,8 @@
 package rapina
 
 import (
+	"strings"
+
 	"github.com/adrprado/rapina/reports"
 	"github.com/pkg/errors"
 )
@@ -23,6 +25,8 @@ func Report(company string, begin, end int) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "fail to open db")
 	}
+
+	company = strings.ToUpper(company)
 
 	return reports.Report(db, company, begin, end, dataDir+"/"+company+".xlsx")
 }
