@@ -55,19 +55,19 @@ func statementItems(db *sql.DB, company string) (items []string, err error) {
 	return
 }
 
+type statement struct {
+	date     string
+	denomCia string
+	escala   string
+	cdConta  string
+	dsConta  string
+	vlConta  float32
+}
+
 //
 // financialReport
 //
-func financialReport(db *sql.DB, e *Excel, company, year string) (err error) {
-
-	var finance struct {
-		date     string
-		denomCia string
-		escala   string
-		cdConta  string
-		dsConta  string
-		vlConta  float32
-	}
+func financialReport(db *sql.DB, e *Excel, company, year string) (statements []statement, err error) {
 
 	selectReport := fmt.Sprintf(`
 	SELECT
@@ -116,24 +116,27 @@ func financialReport(db *sql.DB, e *Excel, company, year string) (err error) {
 		DT, CD_CONTA
 	;`, company, year, company, year, company, year)
 
-	rows, err := db.Query(selectReport)
+	statements = make([]statement, 0, 200)
+	st := statement{}
+	yearMark := ""
 
-	yearm := ""
+	rows, err := db.Query(selectReport)
 	for rows.Next() {
 		rows.Scan(
-			&finance.date,
-			&finance.denomCia,
-			&finance.escala,
-			&finance.cdConta,
-			&finance.dsConta,
-			&finance.vlConta,
+			&st.date,
+			&st.denomCia,
+			&st.escala,
+			&st.cdConta,
+			&st.dsConta,
+			&st.vlConta,
 		)
 
-		if finance.date != yearm {
-			yearm = finance.date
+		if st.date != yearMark {
+			yearMark = st.date
 			fmt.Println("-----------------")
 		}
-		fmt.Println(finance)
+		// fmt.Println(st)
+		statements = append(statements, st)
 	}
 
 	// genericPrint(rows)

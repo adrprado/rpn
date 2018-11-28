@@ -23,7 +23,11 @@ func Report(db *sql.DB, company, year, filepath string) (err error) {
 		s1.printRows("A"+row, &[]string{item})
 		rowIdx++
 	}
-	financialReport(db, e, company, year)
+
+	statements, _ := financialReport(db, e, company, year)
+	for _, st := range statements {
+		fmt.Printf("%-20s %-70s %20.02f\n", st.cdConta, st.dsConta, st.vlConta)
+	}
 
 	e.saveAndCloseExcel(filepath)
 	return
