@@ -152,7 +152,7 @@ func fetchFile(dataType string, year int) (reqFile string, err error) {
 // fetchB3 downloads the sectoral classification file from B3
 //
 func fetchB3() (xlsxfile string, err error) {
-	xlsxfile = dataDir + "/sectoral.xlsx"
+	xlsxfile = dataDir + "/setorial.xlsx"
 	fmt.Print("[ ] Baixando arquivo de classificação setorial da B3\r")
 	zipfile := dataDir + "/sectorial.zip"
 
