@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 )
 
 var fnvHash = fnv.New32a()
@@ -64,7 +66,7 @@ func populateTable(db *sql.DB, table, file string) (err error) {
 	}
 	defer fh.Close()
 
-	// dec := transform.NewReader(file, charmap.Windows1252.NewDecoder())
+	dec := transform.NewReader(fh, charmap.ISO8859_1.NewDecoder())
 
 	// BEGIN TRANSACTION
 	tx, err := db.Begin()
@@ -77,11 +79,12 @@ func populateTable(db *sql.DB, table, file string) (err error) {
 		return r == ';'
 	}
 	header := make(map[string]int) // stores the header item position (e.g., DT_FIM_EXERC:9)
-	scanner := bufio.NewScanner(fh)
+	scanner := bufio.NewScanner(dec)
 	count := 0
 
 	// Loop thru file, line by line
 	for scanner.Scan() {
+		// line := toUtf8([]byte(scanner.Text()))
 		line := scanner.Text()
 		f := strings.FieldsFunc(line, sep)
 
@@ -184,4 +187,16 @@ func Exec(db *sql.DB, dataType string, file string) (err error) {
 	fmt.Println()
 
 	return err
+}
+
+//
+// toUtf8 convert iso8859-1 to utf8
+// https://stackoverflow.com/a/13511463/276311
+//
+func toUtf8(iso8859_1_buf []byte) string {
+	buf := make([]rune, len(iso8859_1_buf))
+	for i, b := range iso8859_1_buf {
+		buf[i] = rune(b)
+	}
+	return string(buf)
 }

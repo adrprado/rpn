@@ -75,9 +75,12 @@ func (s *Sheet) printHeader(titles []string) (err error) {
 }
 
 //
-// printCols prints cols in Excel
+// printRows prints cols in Excel
 //
-func printCols(cols []string) error {
+func (s *Sheet) printRows(startingCel string, slice interface{}) error {
+
+	s.e.xlsx.SetSheetRow(s.name, startingCel, slice)
+
 	return nil
 }
 
