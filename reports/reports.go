@@ -12,7 +12,7 @@ import (
 //
 func Report(db *sql.DB, company string, begin, end int, filepath string) (err error) {
 	e := newExcel()
-	s1, _ := e.newSheet(company)
+	sheet, _ := e.newSheet(company)
 
 	// Print statements code and description
 	items, _ := statementItems(db, company)
@@ -20,7 +20,7 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 	for _, it := range items {
 		sp := adjustSpace(it.cdConta)
 		cell := "A" + strconv.Itoa(row)
-		s1.printRows(cell, &[]string{sp + it.cdConta, sp + it.dsConta})
+		sheet.printRows(cell, &[]string{sp + it.cdConta, sp + it.dsConta})
 		row++
 	}
 
@@ -29,17 +29,18 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 	for y := begin; y <= end; y++ {
 		col := string(cols[y-begin])
 		cell := col + "1"
-		s1.printRows(cell, &[]int{y})
+		sheet.printTitle(cell, "["+strconv.Itoa(y)+"]")
 
 		statements, _ := financialReport(db, company, y)
 		row = 2
 		for _, it := range items {
 			cell := col + strconv.Itoa(row)
-			s1.printRows(cell, &[]float32{statements[it.hash]})
+			sheet.printValue(cell, statements[it.hash])
 			row++
 		}
 	}
 
+	sheet.autoWidth()
 	err = e.saveAndCloseExcel(filepath)
 
 	if err == nil {
