@@ -51,7 +51,7 @@ func FetchCVM(begin, end int) (err error) {
 		begin = aux
 	}
 
-	fetchB3()
+	// fetchB3()
 
 	db, err := openDatabase()
 	if err != nil {
@@ -60,7 +60,7 @@ func FetchCVM(begin, end int) (err error) {
 
 	for year := begin; year <= end; year++ {
 		fmt.Printf("[✓] %d ---------------------\n", year)
-		for _, report := range []string{"BPA", "BPP", "DRE", "DFC_MD", "DFC_MI"} {
+		for _, report := range []string{"BPA", "BPP", "DRE", "DFC_MD", "DFC_MI", "DVA"} {
 			if err = processReport(db, report, year); err != nil {
 				fmt.Printf("[x] Erro ao processar %s de %d: %v\n", report, year, err)
 			}

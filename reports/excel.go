@@ -70,11 +70,9 @@ func (s *Sheet) printTitle(cell string, title string) (err error) {
 
 	// Set styles
 	style, err := s.e.xlsx.NewStyle(`{"number_format": 0,"font":{"bold":true},"alignment":{"horizontal":"center"},"border":[{"type":"bottom","color":"333333","style":3}]}`)
-	if err != nil {
-		return errors.Wrap(err, "style")
+	if err == nil {
+		s.e.xlsx.SetCellStyle(s.name, cell, cell, style)
 	}
-
-	s.e.xlsx.SetCellStyle(s.name, cell, cell, style)
 
 	return
 }
@@ -82,7 +80,17 @@ func (s *Sheet) printTitle(cell string, title string) (err error) {
 //
 // printRows prints cols in Excel
 //
-func (s *Sheet) printRows(startingCel string, slice interface{}) error {
+func (s *Sheet) printRows(startingCel string, slice *[]string, bold bool) error {
+
+	// Set styles
+	if bold {
+		style, err := s.e.xlsx.NewStyle(`{"font":{"bold":true}}`)
+		if err == nil {
+			col, row := cell2axis(startingCel)
+			col += len(*slice)
+			s.e.xlsx.SetCellStyle(s.name, startingCel, axis(col, row), style)
+		}
+	}
 
 	s.e.xlsx.SetSheetRow(s.name, startingCel, slice)
 
@@ -92,19 +100,21 @@ func (s *Sheet) printRows(startingCel string, slice interface{}) error {
 //
 // printValues prints cols in Excel
 //
-func (s *Sheet) printValue(cell string, value float32) error {
+func (s *Sheet) printValue(cell string, value float32, bold bool) (err error) {
 
 	s.e.xlsx.SetSheetRow(s.name, cell, &[]float32{value})
 
 	// Set styles
-	// style, err := s.e.xlsx.NewStyle(`{"number_format": 38}`)
-	style, err := s.e.xlsx.NewStyle(`{"custom_number_format": "_-* #,##0_-;_-* (#,##0);_-* \"-\"_-;_-@_-"}`)
-	// _-* #.##0_-;_-* (#.##0);_-* "-"_-;_-@_-
-	if err != nil {
-		return errors.Wrap(err, "style")
+	var style int
+	if bold {
+		style, err = s.e.xlsx.NewStyle(`{"font":{"bold":true},"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
+	} else {
+		// style, err := s.e.xlsx.NewStyle(`{"number_format": 38}`)
+		style, err = s.e.xlsx.NewStyle(`{"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
 	}
-
-	s.e.xlsx.SetCellStyle(s.name, cell, cell, style)
+	if err == nil {
+		s.e.xlsx.SetCellStyle(s.name, cell, cell, style)
+	}
 
 	return nil
 }
@@ -130,12 +140,12 @@ func (s *Sheet) autoWidth() {
 		if width > 0 {
 			w := float64(width)
 			if w > 10 {
-				w -= 6
+				w -= 4
 			}
 			if w > 40 {
 				w -= 8
 			}
-			s.e.xlsx.SetColWidth(s.name, col, col, w+4)
+			s.e.xlsx.SetColWidth(s.name, col, col, w)
 		}
 	}
 }

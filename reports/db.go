@@ -22,30 +22,14 @@ func statementItems(db *sql.DB, company string) (items []stItems, err error) {
 	SELECT DISTINCT
 		CD_CONTA, DS_CONTA
 	FROM
-		bpa
-	WHERE
-		DENOM_CIA LIKE "%s%%"
-		AND ORDEM_EXERC LIKE "_LTIMO"
-
-	UNION SELECT DISTINCT
-		CD_CONTA, DS_CONTA
-	FROM
-		bpp
-	WHERE
-		DENOM_CIA LIKE "%s%%"
-		AND ORDEM_EXERC LIKE "_LTIMO"
-
-	UNION SELECT DISTINCT
-		CD_CONTA, DS_CONTA
-	FROM
-		dre
+		dfp
 	WHERE
 		DENOM_CIA LIKE "%s%%"
 		AND ORDEM_EXERC LIKE "_LTIMO"
 
 	ORDER BY
 		CD_CONTA, DS_CONTA
-	;`, company, company, company)
+	;`, company)
 
 	rows, err := db.Query(selectItems)
 	if err != nil {
@@ -80,42 +64,13 @@ func financialReport(db *sql.DB, company string, year int) (statements map[uint3
 
 	selectReport := fmt.Sprintf(`
 	SELECT
-		strftime('%%Y-%%m-%%d', DT_FIM_EXERC, 'unixepoch') AS DT,
+		strftime('%%Y-%%m-%%d', DT_REFER, 'unixepoch') AS DT,
 		DENOM_CIA,
-		ESCALA_MOEDA,
 		CD_CONTA,
 		DS_CONTA,
 		VL_CONTA
 	FROM
-		bpa
-	WHERE
-		DENOM_CIA LIKE "%s%%"
-		AND ORDEM_EXERC LIKE "_LTIMO"
-		AND DT = "%d-12-31"
-
-	UNION SELECT
-		strftime('%%Y-%%m-%%d', DT_FIM_EXERC, 'unixepoch') AS DT,
-		DENOM_CIA,
-		ESCALA_MOEDA,
-		CD_CONTA,
-		DS_CONTA,
-		VL_CONTA
-	FROM
-		bpp
-	WHERE
-		DENOM_CIA LIKE "%s%%"
-		AND ORDEM_EXERC LIKE "_LTIMO"
-		AND DT = "%d-12-31"
-
-	UNION SELECT
-		strftime('%%Y-%%m-%%d', DT_FIM_EXERC, 'unixepoch') AS DT,
-		DENOM_CIA,
-		ESCALA_DRE AS ESCALA_MOEDA,
-		CD_CONTA,
-		DS_CONTA,
-		VL_CONTA
-	FROM
-		dre
+		dfp
 	WHERE
 		DENOM_CIA LIKE "%s%%"
 		AND ORDEM_EXERC LIKE "_LTIMO"
@@ -123,7 +78,7 @@ func financialReport(db *sql.DB, company string, year int) (statements map[uint3
 
 	ORDER BY
 		DT, CD_CONTA
-	;`, company, year, company, year, company, year)
+	;`, company, year)
 
 	statements = make(map[uint32]float32)
 	st := statement{}
@@ -133,7 +88,6 @@ func financialReport(db *sql.DB, company string, year int) (statements map[uint3
 		rows.Scan(
 			&st.date,
 			&st.denomCia,
-			&st.escala,
 			&st.cdConta,
 			&st.dsConta,
 			&st.vlConta,

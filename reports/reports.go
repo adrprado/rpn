@@ -17,10 +17,12 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 	// Print statements code and description
 	items, _ := statementItems(db, company)
 	row := 2
+	baseItems := make([]bool, len(items)+row)
 	for _, it := range items {
-		sp := adjustSpace(it.cdConta)
+		var sp string
+		sp, baseItems[row] = adjustSpace(it.cdConta)
 		cell := "A" + strconv.Itoa(row)
-		sheet.printRows(cell, &[]string{sp + it.cdConta, sp + it.dsConta})
+		sheet.printRows(cell, &[]string{sp + it.cdConta, sp + it.dsConta}, baseItems[row])
 		row++
 	}
 
@@ -35,7 +37,7 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 		row = 2
 		for _, it := range items {
 			cell := col + strconv.Itoa(row)
-			sheet.printValue(cell, statements[it.hash])
+			sheet.printValue(cell, statements[it.hash], baseItems[row])
 			row++
 		}
 	}
@@ -54,10 +56,25 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 // adjustSpace returns the number of spaces according to the code level, e.g.:
 // "1.1 ABC"   => "  " (2 spaces)
 // "1.1.1 ABC" => "    " (4 spaces)
+// For items equal or above 3, only returns spaces after 2nd level:
+// "3.01 ABC"    => ""
+// "3.01.01 ABC" => "  "
 //
-func adjustSpace(str string) (spaces string) {
+func adjustSpace(str string) (spaces string, baseItem bool) {
+	num := strings.SplitN(str, ".", 2)[0]
 	c := strings.Count(str, ".")
-	spaces = strings.Repeat("  ", c)
+	if num != "1" && num != "2" && c > 0 {
+		c--
+	}
+	if c > 0 {
+		spaces = strings.Repeat("  ", c)
+	}
+
+	if num == "1" || num == "2" {
+		baseItem = c <= 1
+	} else {
+		baseItem = c == 0
+	}
 
 	return
 }

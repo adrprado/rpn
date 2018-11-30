@@ -1,6 +1,26 @@
 package parsers
 
 var createTableMap = map[string]string{
+	"dfp": `CREATE TABLE IF NOT EXISTS dfp
+	(
+		"ID" PRIMARY KEY,
+		"CNPJ_CIA" varchar(20),
+		"DT_REFER" integer,
+		"VERSAO" integer,
+		"DENOM_CIA" varchar(100),
+		"CD_CVM" integer,
+		"GRUPO_DFP" varchar(206),
+		"MOEDA" varchar(4),
+		"ESCALA_MOEDA" varchar(7),
+		"ESCALA_DRE" varchar(7),
+		"ORDEM_EXERC" varchar(9),
+		"DT_INI_EXERC" integer,
+		"DT_FIM_EXERC" integer,
+		"CD_CONTA" varchar(18),
+		"DS_CONTA" varchar(100),
+		"VL_CONTA" real
+	);`,
+
 	"BPA": `CREATE TABLE IF NOT EXISTS bpa
 	(
 		"ID" PRIMARY KEY,

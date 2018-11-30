@@ -27,10 +27,30 @@ func GetHash(s string) uint32 {
 }
 
 //
+// whatTable for the data type
+//
+func whatTable(dataType string) (table string, err error) {
+	switch dataType {
+	case "BPA", "BPP", "DRE", "DFC_MD", "DFC_MI", "DVA":
+		table = "dfp"
+	default:
+		return "", errors.Wrapf(err, "tipo de informação inexistente: %s", dataType)
+	}
+
+	return
+}
+
+//
 // createTable creates the table if not created yet
 //
 func createTable(db *sql.DB, dataType string) (err error) {
-	statement, err := db.Prepare(createTableMap[dataType])
+
+	table, err := whatTable(dataType)
+	if err != nil {
+		return err
+	}
+
+	statement, err := db.Prepare(createTableMap[table])
 	if err != nil {
 		return errors.Wrap(err, "erro ao preparar tabela")
 	}
@@ -40,15 +60,6 @@ func createTable(db *sql.DB, dataType string) (err error) {
 		return errors.Wrap(err, "erro ao criar tabela")
 	}
 
-	// rows, _ := db.Query("SELECT CNPJ_CIA, DT_REFER, DENOM_CIA FROM bpa")
-	// var cnpj string
-	// var dtRef int
-	// var cia string
-	// for rows.Next() {
-	// 	rows.Scan(&cnpj, &dtRef, &cia)
-	// 	fmt.Println(strconv.Itoa(dtRef) + ": " + cnpj + " " + cia)
-	// }
-
 	return nil
 
 }
@@ -56,7 +67,7 @@ func createTable(db *sql.DB, dataType string) (err error) {
 //
 // populateBPPTable loop thru file and insert its lines into DB
 //
-func populateTable(db *sql.DB, table, file string) (err error) {
+func populateTable(db *sql.DB, dataType, file string) (err error) {
 	progress := []string{"/", "-", "\\", "|", "-", "\\"}
 	p := 0
 
@@ -94,8 +105,8 @@ func populateTable(db *sql.DB, table, file string) (err error) {
 				header[h] = i
 			}
 		} else {
-			if err = insertLine(tx, table, &header, f, GetHash(line)); err != nil {
-				fmt.Printf("[x] %s: %v", table, err)
+			if err = insertLine(tx, dataType, &header, f, GetHash(line)); err != nil {
+				fmt.Printf("[x] %s: %v\n", dataType, err)
 			}
 		}
 
@@ -122,7 +133,7 @@ func populateTable(db *sql.DB, table, file string) (err error) {
 //
 // insertLine into DB
 //
-func insertLine(db *sql.Tx, table string, header *map[string]int, fields []string, hash uint32) error {
+func insertLine(db *sql.Tx, dataType string, header *map[string]int, fields []string, hash uint32) (err error) {
 	var names, values []string
 	for h, i := range *header {
 		names = append(names, "`"+h+"`")
@@ -144,6 +155,11 @@ func insertLine(db *sql.Tx, table string, header *map[string]int, fields []strin
 		}
 
 		values = append(values, f)
+	}
+
+	table, err := whatTable(dataType)
+	if err != nil {
+		return err
 	}
 
 	insert := fmt.Sprint("INSERT OR IGNORE INTO ", table,
@@ -172,15 +188,13 @@ func insertLine(db *sql.Tx, table string, header *map[string]int, fields []strin
 // if necessary
 //
 func Exec(db *sql.DB, dataType string, file string) (err error) {
-	dt := strings.ToLower(dataType)
-
 	err = createTable(db, dataType)
 	if err != nil {
 		return err
 	}
 
 	fmt.Print("[ ] Processando arquivo ", dataType)
-	err = populateTable(db, dt, file)
+	err = populateTable(db, dataType, file)
 	if err == nil {
 		fmt.Print("\r[✓")
 	}
