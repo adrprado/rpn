@@ -7,17 +7,17 @@ import (
 	"github.com/adrprado/rapina/parsers"
 )
 
-type stItems struct {
+type accItems struct {
 	hash    uint32
 	cdConta string
 	dsConta string
 }
 
 //
-// statementItems returns all statements codes and descriptions, e.g.:
+// accountsItems returns all accounts codes and descriptions, e.g.:
 // [1 Ativo Total, 1.01 Ativo Circulante, ...]
 //
-func statementItems(db *sql.DB, company string) (items []stItems, err error) {
+func accountsItems(db *sql.DB, company string) (items []accItems, err error) {
 	selectItems := fmt.Sprintf(`
 	SELECT DISTINCT
 		CD_CONTA, DS_CONTA
@@ -36,7 +36,7 @@ func statementItems(db *sql.DB, company string) (items []stItems, err error) {
 		panic(err)
 	}
 
-	var item stItems
+	var item accItems
 	for rows.Next() {
 		rows.Scan(&item.cdConta, &item.dsConta)
 		item.hash = parsers.GetHash(item.cdConta + item.dsConta)
@@ -48,7 +48,7 @@ func statementItems(db *sql.DB, company string) (items []stItems, err error) {
 	return
 }
 
-type statement struct {
+type account struct {
 	date     string
 	denomCia string
 	escala   string
@@ -58,9 +58,10 @@ type statement struct {
 }
 
 //
-// financialReport
+// accountsValues stores the values for each account into a map using a hash
+// of the account code and description as its key
 //
-func financialReport(db *sql.DB, company string, year int) (statements map[uint32]float32, err error) {
+func accountsValues(db *sql.DB, company string, year int) (values map[uint32]float32, err error) {
 
 	selectReport := fmt.Sprintf(`
 	SELECT
@@ -80,8 +81,8 @@ func financialReport(db *sql.DB, company string, year int) (statements map[uint3
 		DT, CD_CONTA
 	;`, company, year)
 
-	statements = make(map[uint32]float32)
-	st := statement{}
+	values = make(map[uint32]float32)
+	st := account{}
 
 	rows, err := db.Query(selectReport)
 	for rows.Next() {
@@ -93,7 +94,7 @@ func financialReport(db *sql.DB, company string, year int) (statements map[uint3
 			&st.vlConta,
 		)
 
-		statements[parsers.GetHash(st.cdConta+st.dsConta)] = st.vlConta
+		values[parsers.GetHash(st.cdConta+st.dsConta)] = st.vlConta
 	}
 
 	return

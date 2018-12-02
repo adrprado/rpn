@@ -14,8 +14,11 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 	e := newExcel()
 	sheet, _ := e.newSheet(company)
 
-	// Print statements code and description
-	items, _ := statementItems(db, company)
+	// Print accounts codes and descriptions in columns A and B
+	// starting on row 2. Adjust space related to the group, e.g.:
+	// 3.02 ABC <== print in bold if base item and stores the row position in baseItems[]
+	//   3.02.01 ABC
+	items, _ := accountsItems(db, company)
 	row := 2
 	baseItems := make([]bool, len(items)+row)
 	for _, it := range items {
@@ -26,18 +29,21 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 		row++
 	}
 
-	// Print statements values
+	// Print accounts values one year per columns, starting from C, row 2
 	cols := "CDEFGHIJKLMONPQRSTUVWXYZ"
 	for y := begin; y <= end; y++ {
+		if y-begin >= len(cols) {
+			break
+		}
 		col := string(cols[y-begin])
 		cell := col + "1"
-		sheet.printTitle(cell, "["+strconv.Itoa(y)+"]")
+		sheet.printTitle(cell, "["+strconv.Itoa(y)+"]") // Print year as title in row 1
 
-		statements, _ := financialReport(db, company, y)
+		values, _ := accountsValues(db, company, y)
 		row = 2
 		for _, it := range items {
 			cell := col + strconv.Itoa(row)
-			sheet.printValue(cell, statements[it.hash], baseItems[row])
+			sheet.printValue(cell, values[it.hash], baseItems[row])
 			row++
 		}
 	}
