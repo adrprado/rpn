@@ -3,6 +3,7 @@ package reports
 import (
 	"database/sql"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -18,10 +19,10 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 	// starting on row 2. Adjust space related to the group, e.g.:
 	// 3.02 ABC <== print in bold if base item and stores the row position in baseItems[]
 	//   3.02.01 ABC
-	items, _ := accountsItems(db, company)
+	accounts, _ := accountsItems(db, company)
 	row := 2
-	baseItems := make([]bool, len(items)+row)
-	for _, it := range items {
+	baseItems := make([]bool, len(accounts)+row)
+	for _, it := range accounts {
 		var sp string
 		sp, baseItems[row] = adjustSpace(it.cdConta)
 		cell := "A" + strconv.Itoa(row)
@@ -30,6 +31,7 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 	}
 
 	// Print accounts values one year per columns, starting from C, row 2
+	var values map[uint32]float32
 	cols := "CDEFGHIJKLMONPQRSTUVWXYZ"
 	for y := begin; y <= end; y++ {
 		if y-begin >= len(cols) {
@@ -39,11 +41,24 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 		cell := col + "1"
 		sheet.printTitle(cell, "["+strconv.Itoa(y)+"]") // Print year as title in row 1
 
-		values, _ := accountsValues(db, company, y)
+		values, _ = accountsValues(db, company, y)
 		row = 2
-		for _, it := range items {
+		for _, acct := range accounts {
 			cell := col + strconv.Itoa(row)
-			sheet.printValue(cell, values[it.hash], baseItems[row])
+			sheet.printValue(cell, values[acct.hash], baseItems[row])
+			row++
+		}
+
+		// Print financial metrics
+		row++
+		if col == "C" {
+			sheet.printRows("B"+strconv.Itoa(row), &[]string{"ROE"}, true)
+		}
+		metrics, _ := financialMetric(accounts, values)
+		fmt.Println("[>] Metrics: ", metrics)
+		for _, m := range metrics {
+			cell := col + strconv.Itoa(row)
+			sheet.printValue(cell, m, true)
 			row++
 		}
 	}
@@ -54,6 +69,36 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 	if err == nil {
 		fmt.Printf("[✓] Dados salvos em %s\n", filepath)
 	}
+
+	return
+}
+
+func financialMetric(accounts []accItems, values map[uint32]float32) (val map[string]float32, err error) {
+	list := map[string]string{
+		"EQUITY":                 "(?i)Patrim.nio L.quido.*",
+		"DDA":                    "(?i)Deprecia..o.*",
+		"REVENUE":                "(?i)Receita de Venda de Bens e/ou Serviços.*",
+		"EBIT":                   "(?i)Resultado Antes do Resultado Financeiro e dos Tributos.*",
+		"NET_INCOME":             "(?i)Lucro/Preju.zo Consolidado do Per.odo.*",
+		"INTEREST_ON_NET_EQUITY": "(?i)Juros sobre o Capital Pr.prio.*",
+		"DIVIDENDS":              "(?)Dividendos",
+	}
+	val = make(map[string]float32, len(list)+5)
+
+	for _, acct := range accounts {
+		for key := range list {
+			match, _ := regexp.MatchString(list[key], acct.dsConta)
+			if match {
+				fmt.Println("[>]", acct.cdConta, acct.dsConta)
+				val[key] = values[acct.hash]
+				continue
+			}
+		}
+	}
+	val["EBITDA"] = val["EBIT"] - val["DDA"]
+	val["MARGIN_EBITDA"] = val["EBITDA"] / val["REVENUE"]
+	val["MARGIN_EBIT"] = val["EBIT"] / val["REVENUE"]
+	val["ROE"] = val["NET_INCOME"] / val["EQUITY"]
 
 	return
 }
