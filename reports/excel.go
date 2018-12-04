@@ -107,10 +107,18 @@ func (s *Sheet) printValue(cell string, value float32, bold bool) (err error) {
 	// Set styles
 	var style int
 	if bold {
-		style, err = s.e.xlsx.NewStyle(`{"font":{"bold":true},"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
+		if value > 0 && value <= 1 {
+			style, err = s.e.xlsx.NewStyle(`{"font":{"bold":true},"number_format": 9"}`)
+		} else {
+			style, err = s.e.xlsx.NewStyle(`{"font":{"bold":true},"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
+
+		}
 	} else {
-		// style, err := s.e.xlsx.NewStyle(`{"number_format": 38}`)
-		style, err = s.e.xlsx.NewStyle(`{"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
+		if value > 0 && value <= 1 {
+			style, err = s.e.xlsx.NewStyle(`{"number_format": 9}`)
+		} else {
+			style, err = s.e.xlsx.NewStyle(`{"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
+		}
 	}
 	if err == nil {
 		s.e.xlsx.SetCellStyle(s.name, cell, cell, style)

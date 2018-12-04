@@ -51,14 +51,46 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 
 		// Print financial metrics
 		row++
-		if col == "C" {
-			sheet.printRows("B"+strconv.Itoa(row), &[]string{"ROE"}, true)
+		cell = fmt.Sprintf("%s%d", col, row)
+		sheet.printTitle(cell, "["+strconv.Itoa(y)+"]") // Print year as title
+		row++
+		seq := []string{
+			"Patrim. Líq.",
+			"",
+			"Receita Líq.",
+			"EBITDA",
+			"D&A",
+			"EBIT",
+			"Lucro Líq.",
+			"",
+			"Marg. EBITDA",
+			"Marg. EBIT",
+			"Marg. Líq.",
+			"ROE",
+			"",
+			"Caixa",
+			"Dívida Bruta",
+			"Dívida Líq.",
+			"Dív. Bru./PL",
+			"Dív.Líq./EBITDA",
+			"",
+			"FCO",
+			"FCI",
+			"FCF",
+			"Fluxo de Caixa Total",
+			"",
+			"Proventos",
+			"Payout",
 		}
 		metrics, _ := financialMetric(accounts, values)
-		fmt.Println("[>] Metrics: ", metrics)
-		for _, m := range metrics {
-			cell := col + strconv.Itoa(row)
-			sheet.printValue(cell, m, true)
+		for _, m := range seq {
+			if m != "" {
+				if col == "C" {
+					sheet.printRows("B"+strconv.Itoa(row), &[]string{m}, false)
+				}
+				cell := col + strconv.Itoa(row)
+				sheet.printValue(cell, metrics[m], false)
+			}
 			row++
 		}
 	}
@@ -75,30 +107,56 @@ func Report(db *sql.DB, company string, begin, end int, filepath string) (err er
 
 func financialMetric(accounts []accItems, values map[uint32]float32) (val map[string]float32, err error) {
 	list := map[string]string{
-		"EQUITY":                 "(?i)Patrim.nio L.quido.*",
-		"DDA":                    "(?i)Deprecia..o.*",
-		"REVENUE":                "(?i)Receita de Venda de Bens e/ou Serviços.*",
-		"EBIT":                   "(?i)Resultado Antes do Resultado Financeiro e dos Tributos.*",
-		"NET_INCOME":             "(?i)Lucro/Preju.zo Consolidado do Per.odo.*",
-		"INTEREST_ON_NET_EQUITY": "(?i)Juros sobre o Capital Pr.prio.*",
-		"DIVIDENDS":              "(?)Dividendos",
+		"Patrim. Líq.":                  "(?i)Patrim.nio L.quido.*",
+		"D&A":                           "(?i)Deprecia..o.*",
+		"Receita Líq.":                  "(?i)Receita de Venda de Bens e/ou Serviços.*",
+		"EBIT":                          "(?i)Resultado Antes do Resultado Financeiro e dos Tributos.*",
+		"Lucro Líq.":                    "(?i)Lucro/Preju.zo Consolidado do Per.odo.*",
+		"Juros sobre o Capital Próprio": "(?i)Juros sobre o Capital Pr.prio.*",
+		"Dividendos":                    "(?)Dividendos",
+		"Caixa e Equiv.":                "(?)Caixa e Equivalentes de Caixa.*",
+		"Aplic. Financeiras":            "(?)Aplic.*Financeiras$",
+		"FCO":                           "(?)Caixa L.quido Atividades Operacionais",
+		"FCI":                           "(?)Caixa L.quido Atividades de Investimento",
+		"FCF":                           "(?)Caixa L.quido Atividades de Financiamento",
 	}
-	val = make(map[string]float32, len(list)+5)
 
+	val = make(map[string]float32, len(list)+5)
 	for _, acct := range accounts {
 		for key := range list {
 			match, _ := regexp.MatchString(list[key], acct.dsConta)
 			if match {
-				fmt.Println("[>]", acct.cdConta, acct.dsConta)
 				val[key] = values[acct.hash]
 				continue
+			} else
+			// There are 4 entries for "Empréstimos e Financiamentos"
+			// Need this workaround to get the right ones
+			if acct.cdConta+acct.dsConta == "2.01.04Empréstimos e Financiamentos" {
+				val["Dívida Circulante"] = values[acct.hash]
+			} else if acct.cdConta+acct.dsConta == "2.02.01Empréstimos e Financiamentos" {
+				val["Dívida Não Circulante"] = values[acct.hash]
 			}
 		}
 	}
-	val["EBITDA"] = val["EBIT"] - val["DDA"]
-	val["MARGIN_EBITDA"] = val["EBITDA"] / val["REVENUE"]
-	val["MARGIN_EBIT"] = val["EBIT"] / val["REVENUE"]
-	val["ROE"] = val["NET_INCOME"] / val["EQUITY"]
+	val["EBITDA"] = val["EBIT"] - val["D&A"]
+	val["Marg. EBITDA"] = val["EBITDA"] / val["Receita Líq."]
+	val["Marg. EBIT"] = val["EBIT"] / val["Receita Líq."]
+	val["ROE"] = val["Lucro Líq."] / val["Patrim. Líq."]
+	val["Marg. Líq."] = val["Lucro Líq."] / val["Receita Líq."]
+	val["Proventos"] = val["Dividendos"] + val["Juros sobre o Capital Próprio"]
+	val["Payout"] = val["Proventos"] / val["Lucro Líq."]
+	val["Caixa"] = val["Caixa e Equiv."] + val["Aplic. Financeiras"]
+	val["Dívida Bruta"] = val["Dívida Circulante"] + val["Dívida Não Circulante"]
+	val["Dívida Líq."] = val["Dívida Bruta"] - val["Caixa"]
+	val["Dív. Bru./PL"] = 0.0
+	if val["Dívida Bruta"] > 0 {
+		val["Dív. Bru./PL"] = val["Dívida Bruta"] / val["Patrim. Líq."]
+	}
+	val["Dív.Líq./EBITDA"] = 0.0
+	if val["Dívida Líq."] > 0 {
+		val["Dív.Líq./EBITDA"] = val["Dívida Líq."] / val["EBITDA"]
+	}
+	val["Fluxo de Caixa Total"] = val["FCO"] + val["FCI"] + val["FCF"]
 
 	return
 }
