@@ -104,17 +104,17 @@ func (s *Sheet) printValue(cell string, value float32, bold bool) (err error) {
 
 	s.e.xlsx.SetSheetRow(s.name, cell, &[]float32{value})
 
-	// Set styles
+	// Set styles (format numbers > and <= 10 as percentage)
 	var style int
 	if bold {
-		if value > 0 && value <= 1 {
+		if value > 0 && value <= 10 {
 			style, err = s.e.xlsx.NewStyle(`{"font":{"bold":true},"number_format": 9"}`)
 		} else {
 			style, err = s.e.xlsx.NewStyle(`{"font":{"bold":true},"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
 
 		}
 	} else {
-		if value > 0 && value <= 1 {
+		if value > 0 && value <= 10 {
 			style, err = s.e.xlsx.NewStyle(`{"number_format": 9}`)
 		} else {
 			style, err = s.e.xlsx.NewStyle(`{"custom_number_format": "_-* #,##0,_-;_-* (#,##0,);_-* \"-\"_-;_-@_-"}`)
