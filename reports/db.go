@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/adrprado/rapina/parsers"
+	"github.com/pkg/errors"
 )
 
 type accItems struct {
@@ -145,6 +146,35 @@ func genericPrint(rows *sql.Rows) (err error) {
 		if limit >= 4000 {
 			break
 		}
+	}
+
+	return
+}
+
+//
+// companies returns available companies in the DB
+//
+func companies(db *sql.DB) (list []string, err error) {
+
+	selectCompanies := `
+		SELECT DISTINCT
+			DENOM_CIA
+		FROM
+			dfp
+		ORDER BY
+			DENOM_CIA
+		;`
+
+	rows, err := db.Query(selectCompanies)
+	if err != nil {
+		return nil, errors.Wrap(err, "falha ao ler banco de dados")
+	}
+
+	list = make([]string, 0, 10)
+	var companyName string
+	for rows.Next() {
+		rows.Scan(&companyName)
+		list = append(list, companyName)
 	}
 
 	return

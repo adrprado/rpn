@@ -30,3 +30,15 @@ func Report(company string, begin, end int) (err error) {
 
 	return reports.Report(db, company, begin, end, dataDir+"/"+company+".xlsx")
 }
+
+//
+// ListCompanies a company from DB to Excel
+//
+func ListCompanies() (err error) {
+	db, err := openDatabase()
+	if err != nil {
+		return errors.Wrap(err, "fail to open db")
+	}
+
+	return reports.ListCompanies(db)
+}
