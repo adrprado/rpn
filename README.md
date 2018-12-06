@@ -1,6 +1,6 @@
 # rapina
 
-Download and processing Brazilian companies' financial data directly from CVM web server:
+Download and process Brazilian companies' financial data directly from CVM web server:
 
     http://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/
 
@@ -10,7 +10,11 @@ Download and processing Brazilian companies' financial data directly from CVM we
 
     ./rapina get
 
-The database uses sqlite3 as its engine and is stored as `.data/rapina.db`.
+It downloads all files from CVM web server, parses their contents and stores on this sqlite database: `.data/rapina.db`.
+
+## List all companies
+
+    ./rapina list
 
 ## Create a spreadsheet with a company financial data
 
@@ -22,6 +26,12 @@ For example:
     ./rapina report "TEC TOY"
 
 The spreadsheet will be saved at `.data/COMPANY_NAME.xlsx`
+
+# How to compile
+
+1. Clone this repo to your PC (`git clone https://github.com/adrprado/rapina`)
+2. Change to CLI directory (`cd rapina/cli`)
+3. Compile using the Makefile (`make`). To cross compile for Windows on Linux, use `make win`.
 
 # Contributing
 
