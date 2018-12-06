@@ -20,8 +20,22 @@
 
 package main
 
-import "github.com/adrprado/rapina/cli/cmd"
+import (
+	"fmt"
+	"os"
+
+	"github.com/adrprado/rapina/cli/cmd"
+)
+
+var (
+	version string
+	build   string
+)
 
 func main() {
+	fmt.Fprint(os.Stderr, "Rapina - Dados Financeiros de Empresas Brasileiras - ")
+	fmt.Fprintf(os.Stderr, "v%s-%s\n", version, build)
+	fmt.Fprint(os.Stderr, "(2018) github.com/dude333/rapina ツ\n\n")
+
 	cmd.Execute()
 }
