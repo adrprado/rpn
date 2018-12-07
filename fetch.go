@@ -230,6 +230,7 @@ func filesCleanup(files []string) {
 //
 func find(a []string, x string) int {
 	for i, n := range a {
+		n = strings.Replace(n, "\\", "/", -1)
 		if x == n {
 			return i
 		}
